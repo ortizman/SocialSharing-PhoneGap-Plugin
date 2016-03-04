@@ -231,6 +231,10 @@ public class SocialSharing extends CordovaPlugin {
           } else {
             sendIntent.setType("text/plain");
           }
+
+          if (mimeType != null && !"".equals(mimeType)) {
+            sendIntent.setType(mimeType);  
+          }
         } catch (Exception e) {
           callbackContext.error(e.getMessage());
         }
