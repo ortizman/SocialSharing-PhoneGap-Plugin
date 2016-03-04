@@ -70,7 +70,7 @@ public class SocialSharing extends CordovaPlugin {
       callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
       return true;
     } else if (ACTION_SHARE_EVENT.equals(action)) {
-      return doSendIntent(callbackContext, args.getString(0), args.getString(1), args.getJSONArray(2), args.getString(3), null, false);
+      return doSendIntent(callbackContext, args.getString(0), args.getString(1), args.getJSONArray(2), args.getString(3), null, false, args.getString(4));
     } else if (ACTION_SHARE_VIA_TWITTER_EVENT.equals(action)) {
       return doSendIntent(callbackContext, args.getString(0), args.getString(1), args.getJSONArray(2), args.getString(3), "twitter", false);
     } else if (ACTION_SHARE_VIA_FACEBOOK_EVENT.equals(action)) {
@@ -187,7 +187,14 @@ public class SocialSharing extends CordovaPlugin {
     }
   }
 
+  /**
+   * @param mimeType el tipo de archivo que se quiere compartir. Ej: application/pdf, text/plain, etc 
+  */
   private boolean doSendIntent(final CallbackContext callbackContext, final String msg, final String subject, final JSONArray files, final String url, final String appPackageName, final boolean peek) {
+    return this.doSendIntent(callbackContext, msg, subject, files, url, appPackageName, peek,  null);
+  }
+
+  private boolean doSendIntent(final CallbackContext callbackContext, final String msg, final String subject, final JSONArray files, final String url, final String appPackageName, final boolean peek, final String mimeType) {
 
     final CordovaInterface mycordova = cordova;
     final CordovaPlugin plugin = this;
