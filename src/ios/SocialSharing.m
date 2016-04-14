@@ -92,12 +92,24 @@
       [activityVC setValue:subject forKey:@"subject"];
     }
 
-    [activityVC setCompletionWithItemsHandler:^(NSString *activityType, BOOL completed, NSArray * __nullable returnedItems, NSError * __nullable activityError) {
-      [self cleanupStoredFiles];
-      NSLog(@"SocialSharing app selected: %@", activityType);
-      CDVPluginResult * pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:completed];
-      [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-    }];
+    if ([activityVC respondsToSelector:(@selector(setCompletionWithItemsHandler:))]) {
+        [activityVC setCompletionWithItemsHandler:^(NSString *activityType, BOOL completed, NSArray * __nullable returnedItems, NSError * __nullable activityError) {
+            [self cleanupStoredFiles];
+            NSLog(@"SocialSharing app selected: %@", activityType);
+            CDVPluginResult * pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:completed];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        }];
+      }else{
+      // let's suppress this warning otherwise folks will start opening issues while it's not relevant
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+          [activityVC setCompletionHandler:^(NSString *activityType, BOOL completed) {
+              [self cleanupStoredFiles];
+              NSLog(@"SocialSharing app selected: %@", activityType);
+              CDVPluginResult * pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:completed];
+              [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+          }];
+#pragma GCC diagnostic warning "-Wdeprecated-declarations"
+      }
 
     NSArray * socialSharingExcludeActivities = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SocialSharingExcludeActivities"];
     if (socialSharingExcludeActivities!=nil && [socialSharingExcludeActivities count] > 0) {
@@ -282,6 +294,8 @@
       [alert show];
       return;
     }
+
+    [self cycleTheGlobalMailComposer];
 
     self.globalMailComposer.mailComposeDelegate = self;
 
@@ -513,7 +527,11 @@
 
   // remember the command for the delegate method
   _command = command;
-  [_documentInteractionController presentOpenInMenuFromRect:CGRectZero inView:self.webView animated:YES];
+
+  // test for #513
+  dispatch_async(dispatch_get_main_queue(), ^(void){
+    [_documentInteractionController presentOpenInMenuFromRect:CGRectZero inView:self.webView animated:YES];
+  });
 }
 
 - (void)shareViaWhatsApp:(CDVInvokedUrlCommand*)command {
